@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ROVER CONTROL - SIMPLE</title>
+    <style>
+        body {
+            background: #000;
+            color: #0f0;
+            font-family: monospace;
+            padding: 40px;
+            font-size: 18px;
+        }
+        .btn {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 30px 60px;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+        .btn:hover {
+            background: #0ff;
+        }
+        #log {
+            background: #111;
+            border: 2px solid #0f0;
+            padding: 20px;
+            margin-top: 20px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+    </style>
+</head>
+<body>
+    <h1>🌙 LUNAR ROVER - DIRECT CONTROL</h1>
+    
+    <div style="text-align: center; margin: 40px 0;">
+        <div>
+            <button class="btn" onclick="go('forward')">▲ FORWARD</button>
+        </div>
+        <div>
+            <button class="btn" onclick="go('left')">◄ LEFT</button>
+            <button class="btn" onclick="go('stop')">■ STOP</button>
+            <button class="btn" onclick="go('right')">► RIGHT</button>
+        </div>
+        <div>
+            <button class="btn" onclick="go('backward')">▼ BACKWARD</button>
+        </div>
+    </div>
+    
+    <div id="log"></div>
+
+    <script>
+        const logEl = document.getElementById('log');
+        
+        function addLog(msg, isError = false) {
+            const time = new Date().toLocaleTimeString();
+            const span = document.createElement('div');
+            span.className = isError ? 'error' : 'success';
+            span.textContent = `[${time}] ${msg}`;
+            logEl.appendChild(span);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        async function go(action) {
+            addLog(`Sending ${action.toUpperCase()} command...`);
+            
+            try {
+                const response = await fetch(`http://localhost:5000/api/command/${action}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    addLog(`✓ ${action.toUpperCase()} executed successfully!`);
+                } else {
+                    addLog(`✗ Failed: ${data.error || 'Unknown error'}`, true);
+                }
+            } catch (error) {
+                addLog(`✗ ERROR: ${error.message}`, true);
+            }
+            
+            // Also fetch and display recent logs
+            setTimeout(getLogs, 100);
+        }
+        
+        async function getLogs() {
+            try {
+                const response = await fetch('http://localhost:5000/api/logs/recent?count=5');
+                const data = await response.json();
+                
+                if (data.logs && data.logs.length > 0) {
+                    addLog(`📡 Server logs (${data.logs.length} entries):`);
+                    data.logs.forEach(log => {
+                        addLog(`  ${log.type}: ${log.message}`);
+                    });
+                }
+            } catch (error) {
+                addLog(`✗ Failed to get logs: ${error.message}`, true);
+            }
+        }
+        
+        // Initial log fetch
+        addLog('Control panel loaded. Click buttons to control rover.');
+        setTimeout(getLogs, 500);
+    </script>
+</body>
+</html>

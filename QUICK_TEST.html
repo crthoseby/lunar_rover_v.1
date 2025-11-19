@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rover Quick Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        button {
+            padding: 20px 40px;
+            margin: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        #output {
+            background: #2a2a2a;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            min-height: 200px;
+        }
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        .info { color: #2196F3; }
+    </style>
+</head>
+<body>
+    <h1>🚀 Rover Quick Test</h1>
+    <p>Click each button to test the server:</p>
+    
+    <button onclick="testServer()">1. TEST SERVER CONNECTION</button>
+    <button onclick="testForward()">2. TEST FORWARD COMMAND</button>
+    <button onclick="testLogs()">3. TEST LOGS</button>
+    <button onclick="openRover()">4. OPEN ROVER INTERFACE</button>
+    
+    <div id="output">Waiting for test...</div>
+
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type;
+            output.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        async function testServer() {
+            log('Testing server connection...', 'info');
+            try {
+                const response = await fetch('http://localhost:5000/api/status');
+                const data = await response.json();
+                log('✓ SUCCESS! Server is responding', 'success');
+                log('Server status: ' + JSON.stringify(data, null, 2), 'success');
+            } catch (error) {
+                log('✗ FAILED: ' + error.message, 'error');
+                log('Make sure the server is running: python web_server.py', 'error');
+            }
+        }
+        
+        async function testForward() {
+            log('Sending FORWARD command...', 'info');
+            try {
+                const response = await fetch('http://localhost:5000/api/command/forward', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+                const data = await response.json();
+                log('✓ Command sent! Response: ' + JSON.stringify(data), 'success');
+            } catch (error) {
+                log('✗ FAILED: ' + error.message, 'error');
+            }
+        }
+        
+        async function testLogs() {
+            log('Fetching transmission logs...', 'info');
+            try {
+                const response = await fetch('http://localhost:5000/api/logs/recent?count=10');
+                const data = await response.json();
+                log('✓ Logs retrieved! Count: ' + data.logs.length, 'success');
+                data.logs.forEach(logEntry => {
+                    if (typeof logEntry === 'object') {
+                        log('  ' + JSON.stringify(logEntry), 'info');
+                    } else {
+                        log('  ' + logEntry, 'info');
+                    }
+                });
+            } catch (error) {
+                log('✗ FAILED: ' + error.message, 'error');
+            }
+        }
+        
+        function openRover() {
+            log('Opening rover interface in new tab...', 'info');
+            window.open('http://localhost:5000', '_blank');
+        }
+    </script>
+</body>
+</html>

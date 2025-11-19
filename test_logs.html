@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Logs API</title>
+</head>
+<body>
+    <h1>Testing Logs API</h1>
+    <button onclick="fetchLogs()">Fetch Logs</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function fetchLogs() {
+            try {
+                console.log('Fetching logs...');
+                const response = await fetch('/api/logs/recent?count=10');
+                console.log('Response status:', response.status);
+                const data = await response.json();
+                console.log('Data:', data);
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        // Auto-fetch on load
+        window.addEventListener('load', fetchLogs);
+    </script>
+</body>
+</html>

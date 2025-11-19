@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ROVER TEST</title>
+    <style>
+        body { 
+            font-family: Arial; 
+            padding: 20px; 
+            background: #000; 
+            color: #0f0;
+        }
+        button { 
+            padding: 20px 40px; 
+            font-size: 20px; 
+            margin: 10px;
+            cursor: pointer;
+            background: #0f0;
+            border: none;
+            border-radius: 5px;
+        }
+        #result { 
+            margin: 20px 0; 
+            padding: 20px; 
+            background: #111;
+            border: 2px solid #0f0;
+            font-size: 16px;
+            white-space: pre-wrap;
+        }
+        .error { color: #f00; }
+        .success { color: #0f0; }
+    </style>
+</head>
+<body>
+    <h1>🌙 ROVER CONNECTION TEST</h1>
+    
+    <button onclick="testConnection()">1. Test Server Connection</button>
+    <button onclick="testCommand()">2. Test Forward Command</button>
+    <button onclick="testLogs()">3. Test Logs</button>
+    <button onclick="openFullInterface()">4. Open Full Interface</button>
+    
+    <div id="result">Click buttons above to test...</div>
+
+    <script>
+        const result = document.getElementById('result');
+        
+        async function testConnection() {
+            result.innerHTML = '⏳ Testing connection to http://localhost:5000...';
+            try {
+                const response = await fetch('http://localhost:5000/api/status');
+                const data = await response.json();
+                result.innerHTML = `<span class="success">✅ SUCCESS!\n\nServer Response:\n${JSON.stringify(data, null, 2)}</span>`;
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ ERROR: ${error.message}\n\nMake sure server is running!</span>`;
+            }
+        }
+        
+        async function testCommand() {
+            result.innerHTML = '⏳ Sending FORWARD command...';
+            try {
+                const response = await fetch('http://localhost:5000/api/command/forward', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                result.innerHTML = `<span class="success">✅ COMMAND SENT!\n\nResponse:\n${JSON.stringify(data, null, 2)}</span>`;
+                
+                // Check logs after 1 second
+                setTimeout(testLogs, 1000);
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ ERROR: ${error.message}</span>`;
+            }
+        }
+        
+        async function testLogs() {
+            result.innerHTML = '⏳ Fetching logs...';
+            try {
+                const response = await fetch('http://localhost:5000/api/logs/recent?count=10');
+                const data = await response.json();
+                
+                if (data.logs && data.logs.length > 0) {
+                    let logText = data.logs.map(log => 
+                        `[${log.timestamp}] ${log.type.toUpperCase()}: ${log.message}`
+                    ).join('\n');
+                    result.innerHTML = `<span class="success">✅ LOGS RECEIVED (${data.logs.length} entries):\n\n${logText}</span>`;
+                } else {
+                    result.innerHTML = `<span class="error">⚠ No logs found!\n\nLogs array: ${JSON.stringify(data)}</span>`;
+                }
+            } catch (error) {
+                result.innerHTML = `<span class="error">❌ ERROR: ${error.message}</span>`;
+            }
+        }
+        
+        function openFullInterface() {
+            window.open('http://localhost:5000', '_blank');
+        }
+    </script>
+</body>
+</html>

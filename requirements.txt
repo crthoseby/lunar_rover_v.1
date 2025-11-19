@@ -1,0 +1,37 @@
+# Requirements for Lunar Rover Project - Freenove 4WD Smart Car v2.4
+# Version pinned for reproducibility
+
+# Motor Control
+RPi.GPIO==0.7.1
+
+# Web Server
+Flask==3.0.3
+Flask-CORS==4.0.1
+
+# Camera Support
+Pillow==10.4.0
+numpy==1.26.4
+
+# Computer Vision for Line Following
+opencv-python==4.10.0.84
+
+# GNSS/GPS Support
+pyserial==3.5  # For serial GPS modules
+gps3==0.33.3  # Alternative GPS library (gpsd client)
+geopy==2.4.1  # Geocoding and distance calculations
+
+# Optional: For Pi Camera (install on Raspberry Pi only)
+# picamera2  # For newer Pi Camera modules (Raspberry Pi OS Bullseye+)
+# picamera==1.13  # For legacy Pi Camera (older systems)
+
+# Audio Support (optional)
+# PyAudio==0.2.14  # Audio recording/playback
+
+# Optional: Additional Hardware Support
+# adafruit-circuitpython-ads1x15==2.2.23  # For battery voltage monitoring (ADS1115)
+# adafruit-circuitpython-pca9685==3.4.21  # For advanced servo control
+
+# Development Dependencies (optional)
+# pytest==8.3.2  # Unit testing
+# black==24.8.0  # Code formatting
+# flake8==7.1.1  # Linting

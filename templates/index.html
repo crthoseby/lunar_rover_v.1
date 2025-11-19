@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌙 Lunar Rover Control</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌙 LUNAR ROVER CONTROL CENTER 🚗</h1>
+            <div class="status-bar">
+                <span class="status-item">Status: <span id="status" class="status-ready">Ready</span></span>
+                <span class="status-item">Speed: <span id="current-speed">75</span>%</span>
+                <span class="status-item">Last Command: <span id="last-command">None</span></span>
+            </div>
+        </header>
+
+        <main>
+            <div class="dashboard-grid">
+                <!-- Left Column: Camera and Console -->
+                <div class="left-column">
+                    <!-- Camera Feed Block -->
+                    <section class="section camera-block">
+                        <h2>📹 Rover Camera Feed</h2>
+                        <div class="camera-container">
+                            <img id="camera-feed" src="/video_feed" alt="Rover Camera Feed">
+                            <div class="camera-overlay">
+                                <div class="camera-info">
+                                    <span id="camera-status" class="camera-status-active">●</span>
+                                    <span id="camera-type">LIVE</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="camera-controls">
+                            <button class="btn-camera" id="toggle-camera">
+                                📷 Camera ON
+                            </button>
+                            <button class="btn-camera" id="snapshot">
+                                📸 Snapshot
+                            </button>
+                            <span class="camera-info-text" id="camera-resolution">640x480 @ 15fps</span>
+                        </div>
+                    </section>
+
+                    <!-- Console Log -->
+                    <section class="section console-section">
+                        <h2>📡 Transmission Log</h2>
+                        <div id="console" class="console">
+                            <div class="log-entry log-info">
+                                <span class="timestamp">[--:--:--]</span> Waiting for data...
+                            </div>
+                        </div>
+                        <div class="log-controls">
+                            <button id="auto-scroll-toggle" onclick="toggleAutoScroll()">🔒 Auto-Scroll: ON</button>
+                            <button onclick="clearConsole()">🗑️ Clear Log</button>
+                        </div>
+                    </section>
+
+                    <!-- Statistics -->
+                    <section class="section">
+                        <h2>📊 Statistics</h2>
+                        <div class="stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Commands Sent:</span>
+                                <span class="stat-value" id="commands-sent">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Total Delay Time:</span>
+                                <span class="stat-value" id="total-delay">0.0s</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Average Delay:</span>
+                                <span class="stat-value" id="avg-delay">0.0s</span>
+                            </div>
+                        </div>
+                        <button class="btn-reset" id="reset-stats">Reset Statistics</button>
+                    </section>
+
+                    <!-- System Status, GNSS, and Ground Conditions in row -->
+                    <div class="status-gnss-container">
+                        <!-- System Status -->
+                        <section class="section system-status-section">
+                            <h2>⚙️ System Status</h2>
+                            <div class="system-status">
+                                <div class="status-item-row">
+                                    <span class="status-label">📹 Camera:</span>
+                                    <span class="status-indicator" id="sys-camera-status">●</span>
+                                    <span class="status-text" id="sys-camera-text">Active</span>
+                                </div>
+                                <div class="status-item-row">
+                                    <span class="status-label">🎤 Audio:</span>
+                                    <span class="status-indicator" id="sys-audio-status">●</span>
+                                    <span class="status-text" id="sys-audio-text">Ready</span>
+                                </div>
+                                <div class="status-item-row">
+                                    <span class="status-label">🛰️ GNSS:</span>
+                                    <span class="status-indicator" id="sys-gnss-status">●</span>
+                                    <span class="status-text" id="sys-gnss-text">Fix</span>
+                                </div>
+                                <div class="status-item-row">
+                                    <span class="status-label">🎯 Servo:</span>
+                                    <span class="status-indicator" id="sys-servo-status">●</span>
+                                    <span class="status-text" id="sys-servo-text">Ready</span>
+                                </div>
+                                <div class="status-item-row">
+                                    <span class="status-label">🤖 Motors:</span>
+                                    <span class="status-indicator" id="sys-motor-status">●</span>
+                                    <span class="status-text" id="sys-motor-text">Ready</span>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- GNSS Position -->
+                        <section class="section gnss-section">
+                            <h2>🛰️ GNSS Position</h2>
+                            <div class="gnss-info">
+                                <div class="gnss-item">
+                                    <span class="gnss-label">Coordinates:</span>
+                                    <span class="gnss-value" id="gnss-coords">Acquiring fix...</span>
+                                </div>
+                                <div class="gnss-item">
+                                    <span class="gnss-label">Altitude:</span>
+                                    <span class="gnss-value" id="gnss-altitude">--</span>
+                                </div>
+                                <div class="gnss-item">
+                                    <span class="gnss-label">Speed:</span>
+                                    <span class="gnss-value" id="gnss-speed">0.0 km/h</span>
+                                </div>
+                                <div class="gnss-item">
+                                    <span class="gnss-label">Satellites:</span>
+                                    <span class="gnss-value" id="gnss-sats">0</span>
+                                </div>
+                                <div class="gnss-item">
+                                    <span class="gnss-label">Distance:</span>
+                                    <span class="gnss-value" id="gnss-distance">0.0 m</span>
+                                </div>
+                            </div>
+                            <button class="btn-reset" id="reset-gnss">Reset Distance</button>
+                        </section>
+
+                        <!-- Ground Conditions -->
+                        <section class="section ground-section">
+                            <h2>🌍 Ground Conditions</h2>
+                            <div class="ground-info">
+                                <div class="ground-header">
+                                    <div class="ground-item">
+                                        <span class="ground-label">Environment:</span>
+                                        <span class="ground-value" id="ground-environment">MOON</span>
+                                    </div>
+                                    <div class="ground-item">
+                                        <span class="ground-label">Gravity:</span>
+                                        <span class="ground-value" id="ground-gravity">1.62 m/s²</span>
+                                    </div>
+                                </div>
+                                <div class="ground-item terrain-item">
+                                    <span class="ground-label">Terrain:</span>
+                                    <span class="ground-value" id="ground-terrain">Dusty Plain</span>
+                                </div>
+                                <div class="ground-metrics">
+                                    <div class="metric-row">
+                                        <span class="metric-label">Wheel Slip:</span>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill" id="slip-progress" style="width: 0%"></div>
+                                        </div>
+                                        <span class="metric-value" id="ground-slip">0%</span>
+                                    </div>
+                                    <div class="metric-row">
+                                        <span class="metric-label">Dust Level:</span>
+                                        <div class="progress-bar">
+                                            <div class="progress-fill dust-fill" id="dust-progress" style="width: 0%"></div>
+                                        </div>
+                                        <span class="metric-value" id="ground-dust">0%</span>
+                                    </div>
+                                </div>
+                                <div class="ground-status-row">
+                                    <span class="ground-label">Status:</span>
+                                    <span class="ground-status-text" id="ground-status-text">Normal</span>
+                                </div>
+                                <div class="ground-warnings" id="ground-warnings" style="display: none;">
+                                    <!-- Warnings will be dynamically added here -->
+                                </div>
+                            </div>
+                            <div class="ground-controls">
+                                <button class="btn-small" id="clean-dust">🧹 Clean Dust</button>
+                                <button class="btn-small" id="unstuck">🆘 Unstuck</button>
+                                <button class="btn-small" id="change-terrain">🔄 Random Terrain</button>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <div class="control-panel">
+                <!-- Movement Controls -->
+                <section class="section">
+                    <h2>🎮 Movement Controls</h2>
+                    <div class="direction-pad">
+                        <div class="row">
+                            <button class="btn-direction btn-forward" data-action="forward" title="Forward (W)">
+                                ▲<br><span>Forward</span>
+                            </button>
+                        </div>
+                        <div class="row">
+                            <button class="btn-direction btn-left" data-action="left" title="Left (A)">
+                                ◄<br><span>Left</span>
+                            </button>
+                            <button class="btn-direction btn-stop" data-action="stop" title="Stop (X)">
+                                ■<br><span>STOP</span>
+                            </button>
+                            <button class="btn-direction btn-right" data-action="right" title="Right (D)">
+                                ►<br><span>Right</span>
+                            </button>
+                        </div>
+                        <div class="row">
+                            <button class="btn-direction btn-backward" data-action="backward" title="Backward (S)">
+                                ▼<br><span>Backward</span>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="keyboard-hint">💡 Use keyboard: W/A/S/D for movement, X to stop</p>
+                </section>
+
+                <!-- Speed Control -->
+                <section class="section">
+                    <h2>⚡ Speed Control</h2>
+                    <div class="slider-container">
+                        <input type="range" id="speed-slider" min="0" max="100" value="75" step="5">
+                        <div class="slider-labels">
+                            <span>0%</span>
+                            <span>50%</span>
+                            <span>100%</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Autonomous Mode -->
+                <section class="section autonomous-section">
+                    <h2>🤖 Autonomous Line Following</h2>
+                    <div class="autonomous-controls">
+                        <button class="btn-autonomous" id="start-autonomous">
+                            ▶️ Start Auto Mode
+                        </button>
+                        <button class="btn-autonomous btn-stop-auto" id="stop-autonomous" disabled>
+                            ⏹️ Stop Auto Mode
+                        </button>
+                    </div>
+                    <div class="autonomous-settings">
+                        <label>Line Color:</label>
+                        <select id="line-color">
+                            <option value="black" selected>Black</option>
+                            <option value="white">White</option>
+                            <option value="red">Red</option>
+                            <option value="blue">Blue</option>
+                            <option value="yellow">Yellow</option>
+                        </select>
+                        <label>Base Speed:</label>
+                        <input type="range" id="auto-speed" min="20" max="80" value="40" step="5">
+                        <span id="auto-speed-value">40%</span>
+                    </div>
+                    <div class="autonomous-status">
+                        <span class="auto-status-label">Status:</span>
+                        <span id="auto-status" class="auto-status-inactive">Inactive</span>
+                    </div>
+                </section>
+
+                <!-- Mars Delay Settings -->
+                <section class="section">
+                    <h2>🔴 Mars Communication Delay</h2>
+                    <div class="delay-controls">
+                        <label class="switch">
+                            <input type="checkbox" id="delay-toggle" checked>
+                            <span class="slider-switch"></span>
+                            <span class="switch-label">Delay Enabled</span>
+                        </label>
+                        
+                        <div class="delay-modes">
+                            <label>Delay Mode:</label>
+                            <select id="delay-mode">
+                                <option value="min">Minimum (2s)</option>
+                                <option value="average" selected>Average (3.5s)</option>
+                                <option value="max">Maximum (5s)</option>
+                                <option value="random">Random (2-5s)</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>Cranfield University - Digital Integration and System Testing Module (A25)</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}?v=20251118-2105"></script>
+    
+    <!-- Emergency log loader - bypasses any caching issues -->
+    <script>
+        console.log('🔧 Emergency log loader activated');
+        let lastLogCount = 0;
+        
+        // Force load logs immediately
+        function emergencyLoadLogs() {
+            fetch('/api/logs/recent?count=50')
+                .then(response => {
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(`🚨 Emergency loader: ${data.logs ? data.logs.length : 0} logs`);
+                    const consoleEl = document.getElementById('console');
+                    
+                    if (!consoleEl) {
+                        console.error('❌ Console element not found!');
+                        return;
+                    }
+                    
+                    if (data.logs && data.logs.length > 0) {
+                        // Only update if log count changed
+                        if (data.logs.length !== lastLogCount) {
+                            console.log(`📝 Updating display: ${lastLogCount} → ${data.logs.length} logs`);
+                            lastLogCount = data.logs.length;
+                            
+                            consoleEl.innerHTML = '';
+                            data.logs.forEach(log => {
+                                const div = document.createElement('div');
+                                div.className = `log-entry log-${log.type}`;
+                                const time = log.timestamp ? log.timestamp.substring(11, 19) : '--:--:--';
+                                div.innerHTML = `<span class="timestamp">[${time}]</span> ${log.message}`;
+                                consoleEl.appendChild(div);
+                            });
+                            consoleEl.scrollTop = consoleEl.scrollHeight;
+                        }
+                    } else {
+                        console.log('ℹ️ No logs available yet');
+                        if (consoleEl.children.length === 0) {
+                            consoleEl.innerHTML = '<div class="log-entry log-info"><span class="timestamp">[--:--:--]</span> Waiting for data...</div>';
+                        }
+                    }
+                })
+                .catch(err => console.error('🚨 Emergency loader error:', err));
+        }
+        
+        // Run immediately and every 500ms for faster updates
+        setTimeout(emergencyLoadLogs, 100);
+        setInterval(emergencyLoadLogs, 500);
+        
+        // Log button clicks for debugging
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🎮 Setting up button click tracking...');
+            document.querySelectorAll('.btn-direction').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    console.log(`🎯 Button clicked: ${btn.dataset.action}`);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
